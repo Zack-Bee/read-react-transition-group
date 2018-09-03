@@ -123,6 +123,8 @@ const propTypes = {
  * added in the next tick. This is a convention based on the `classNames` prop.
  */
 class CSSTransition extends React.Component {
+
+  // Enter阶段修改相关className
   onEnter = (node, appearing) => {
     const { className } = this.getClassNames(appearing ? 'appear' : 'enter')
 
@@ -134,6 +136,7 @@ class CSSTransition extends React.Component {
     }
   }
 
+  // Entering阶段修改相关className
   onEntering = (node, appearing) => {
     const { activeClassName } = this.getClassNames(
       appearing ? 'appear' : 'enter'
@@ -146,6 +149,7 @@ class CSSTransition extends React.Component {
     }
   }
 
+  // Entered阶段修改相关className
   onEntered = (node, appearing) => {
     const { doneClassName } = this.getClassNames('enter');
 
@@ -157,6 +161,7 @@ class CSSTransition extends React.Component {
     }
   }
 
+  // Exit阶段修改相关className
   onExit = (node) => {
     const { className } = this.getClassNames('exit')
 
@@ -169,6 +174,7 @@ class CSSTransition extends React.Component {
     }
   }
 
+  // Exiting阶段修改相关className
   onExiting = (node) => {
     const { activeClassName } = this.getClassNames('exit')
 
@@ -179,6 +185,7 @@ class CSSTransition extends React.Component {
     }
   }
 
+  // Exited阶段修改相关className
   onExited = (node) => {
     const { doneClassName } = this.getClassNames('exit');
 
@@ -190,6 +197,7 @@ class CSSTransition extends React.Component {
     }
   }
 
+  // 得到相应类型的classNames
   getClassNames = (type) => {
     const { classNames } = this.props;
 
@@ -209,6 +217,7 @@ class CSSTransition extends React.Component {
     };
   }
 
+  // 移除该类型的所有className
   removeClasses(node, type) {
     const { className, activeClassName, doneClassName } = this.getClassNames(type)
     className && removeClass(node, className);
@@ -216,6 +225,7 @@ class CSSTransition extends React.Component {
     doneClassName && removeClass(node, doneClassName);
   }
 
+  // 强制浏览器reflow(回流)来重绘, 并且添加class
   reflowAndAddClass(node, className) {
     // This is for to force a repaint,
     // which is necessary in order to transition styles when adding a class name.
