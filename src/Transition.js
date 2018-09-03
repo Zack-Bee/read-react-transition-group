@@ -111,8 +111,10 @@ export const EXITING = 'exiting'
  * you should set the desired final styles when the state is `'exiting'`. That's when the
  * transition to those styles will start and, if you matched the `timeout` prop with the
  * CSS Transition duration, it will end exactly when the state changes to `'exited'`.
- * 定时是过渡的最棘手的部分, 定时的失误将会导致轻微的延迟, 很难被发觉. 一个普遍的例子是
- * 当你想要添加一个exit过渡, 你应该在`exiting`状态设置你想要的最终样式.
+ * 定时是动画的最棘手的部分, 定时的失误将会导致轻微的延迟, 很难被发觉. 一个普遍的例子是
+ * 当你想要添加一个exit过渡, 你应该在`exiting`状态设置你想要的最终样式. 这个状态是过渡
+ * 到指定styles的开始状态, 如果`timeout`属性与CSS Transition的duration相符合(相等),
+ * 过渡状态将会准时地转移到`exited`. 
  *
  * > **Note**: For simpler transitions the `Transition` component might be enough, but
  * > take into account that it's platform-agnostic, while the `CSSTransition` component
@@ -123,6 +125,12 @@ export const EXITING = 'exiting'
  * > (read [this issue](https://github.com/reactjs/react-transition-group/issues/159#issuecomment-322761171)
  * > for more info). Take this into account when choosing between `Transition` and
  * > `CSSTransition`.
+ * > **提示**: 对于简单的过渡来说, `transition`组件可能已经足够, 但是考虑到跨平台的时
+ * > 候, `CSSTransition`组件强制回流(force reflows)(CSSTransition使用scrollTop
+ * > 来时浏览器强制回流, 是一种普遍的hack方法)来让更复杂的过渡更加可预测. 例如, 
+ * > 尽管classes `example-enter`和`example-enter-acitve`一个接一个地立马被应用, 
+ * > 因为强制回流(force reflows)你仍然能够从一个过渡到另一个. 在选择使用`Transition`
+ * > 或是`CSSTransition`时要考虑到这一点.
  */
 class Transition extends React.Component {
   static contextTypes = {
@@ -137,6 +145,8 @@ class Transition extends React.Component {
 
     let parentGroup = context.transitionGroup
     // In the context of a TransitionGroup all enters are really appears
+    // 在TransitionGroup的context中所有的enters都是真正的appears
+    // appear, 是否在初次挂载时使用动画
     let appear =
       parentGroup && !parentGroup.isMounting ? props.enter : props.appear
 
@@ -144,6 +154,7 @@ class Transition extends React.Component {
 
     this.appearStatus = null
 
+    // 初始化state
     if (props.in) {
       if (appear) {
         initialStatus = EXITED
@@ -168,7 +179,10 @@ class Transition extends React.Component {
     return { transitionGroup: null } // allows for nested Transitions
   }
 
+  // 使用props更新state
   static getDerivedStateFromProps({ in: nextIn }, prevState) {
+
+    // 如果in为true且前一个状态为UNMOUNTED, 则将status转移到EXITED
     if (nextIn && prevState.status === UNMOUNTED) {
       return { status: EXITED }
     }
@@ -195,10 +209,12 @@ class Transition extends React.Component {
   //   return { nextStatus }
   // }
 
+  // 挂载后更新status
   componentDidMount() {
     this.updateStatus(true, this.appearStatus)
   }
 
+  // 组件状态更新后更新status
   componentDidUpdate(prevProps) {
     let nextStatus = null
     if (prevProps !== this.props) {
@@ -221,6 +237,7 @@ class Transition extends React.Component {
     this.cancelNextCallback()
   }
 
+  // 得到各个过渡过程的时间
   getTimeouts() {
     const { timeout } = this.props
     let exit, enter, appear
@@ -251,8 +268,11 @@ class Transition extends React.Component {
     }
   }
 
+  // 展示enter阶段
   performEnter(node, mounting) {
     const { enter } = this.props
+
+    // 用来表明是否在初次挂载时出现enter阶段
     const appearing = this.context.transitionGroup
       ? this.context.transitionGroup.isMounting
       : mounting
@@ -261,6 +281,8 @@ class Transition extends React.Component {
 
     // no enter animation skip right to ENTERED
     // if we are mounting and running this it means appear _must_ be set
+    // 没有enter动画时状态直接转移到ENTERED
+    //
     if (!mounting && !enter) {
       this.safeSetState({ status: ENTERED }, () => {
         this.props.onEntered(node)
@@ -268,12 +290,15 @@ class Transition extends React.Component {
       return
     }
 
+    // 触发onEnter
     this.props.onEnter(node, appearing)
 
+    // 开始enter过程
     this.safeSetState({ status: ENTERING }, () => {
       this.props.onEntering(node, appearing)
 
       // FIXME: appear timeout?
+      // timeouts.enter时间后状态转移为 ENTERED
       this.onTransitionEnd(node, timeouts.enter, () => {
         this.safeSetState({ status: ENTERED }, () => {
           this.props.onEntered(node, appearing)
@@ -282,19 +307,23 @@ class Transition extends React.Component {
     })
   }
 
+  // 展示exit阶段
   performExit(node) {
     const { exit } = this.props
     const timeouts = this.getTimeouts()
 
     // no exit animation skip right to EXITED
+    // 没有exit动画时直接转移到EXITED
     if (!exit) {
       this.safeSetState({ status: EXITED }, () => {
         this.props.onExited(node)
       })
       return
     }
+    // 触发onExit
     this.props.onExit(node)
 
+    // 开始exit过程
     this.safeSetState({ status: EXITING }, () => {
       this.props.onExiting(node)
 
@@ -306,6 +335,7 @@ class Transition extends React.Component {
     })
   }
 
+  // 取消下一个回调函数
   cancelNextCallback() {
     if (this.nextCallback !== null) {
       this.nextCallback.cancel()
@@ -313,14 +343,18 @@ class Transition extends React.Component {
     }
   }
 
+  // 安全地setState
   safeSetState(nextState, callback) {
     // This shouldn't be necessary, but there are weird race conditions with
     // setState callbacks and unmounting in testing, so always make sure that
     // we can cancel any pending setState callbacks after we unmount.
+    // 这个函数不是必须的, 但是在测试中setState的回调函数和unmounting存在奇怪的竞争现
+    // 象, 所以确保我们能够随时取消在unmount后正在等待的setState的回调函数.
     callback = this.setNextCallback(callback)
     this.setState(nextState, callback)
   }
 
+  // 设置下一个回调函数
   setNextCallback(callback) {
     let active = true
 
@@ -340,12 +374,13 @@ class Transition extends React.Component {
     return this.nextCallback
   }
 
+  // 经过timeout时间后执行handler
   onTransitionEnd(node, timeout, handler) {
     this.setNextCallback(handler)
 
     if (node) {
       if (this.props.addEndListener) {
-        this.props.addEndListener(node, this.nextCallback)
+        this.props.addEndListener(node, this.nextCallback) // this.nextCallback通常即为handler
       }
       if (timeout != null) {
         setTimeout(this.nextCallback, timeout)
@@ -379,10 +414,14 @@ class Transition extends React.Component {
     delete childProps.onExited
 
     if (typeof children === 'function') {
+
+      // 将维护的state赋予child
       return children(status, childProps)
     }
 
     const child = React.Children.only(children)
+
+    // 将Transition的剩余属性赋予child
     return React.cloneElement(child, childProps)
   }
 }
