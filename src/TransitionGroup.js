@@ -70,14 +70,21 @@ const defaultProps = {
  * (`<Transition>` and `<CSSTransition>`) in a list. Like with the transition
  * components, `<TransitionGroup>` is a state machine for managing the mounting
  * and unmounting of components over time.
+ * `<TransitionGroup>组件管理在list里的一些transition components(比如`Transition`
+ * 和`CSSTransition`). 就像Transition组件一样, `<TransitionGroup>`也是一个管理组件
+ * 在一段时间里mounting以及unmounting的状态机.
  *
  * Consider the example below. As items are removed or added to the TodoList the
  * `in` prop is toggled automatically by the `<TransitionGroup>`.
+ * 考虑下面这个例子. 当items被移除或者添加进TodoList, in属性(the `in` prop)被
+ * `<TransitionGroup>`自动地切换.
  *
  * Note that `<TransitionGroup>`  does not define any animation behavior!
  * Exactly _how_ a list item animates is up to the individual transition
  * component. This means you can mix and match animations across different list
  * items.
+ * 注意`<TransitionGroup>`并没有定义任何的动画行为! 确切地说列表里items的动画只和独立
+ * 的transition component有关. 这意味着你能够对不同的items混合以及搭配动画效果.
  */
 class TransitionGroup extends React.Component {
   static childContextTypes = {

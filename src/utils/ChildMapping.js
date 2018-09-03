@@ -2,6 +2,7 @@ import { Children, cloneElement, isValidElement } from 'react'
 
 /**
  * Given `this.props.children`, return an object mapping key to child.
+ * 传入this.props.children, 返回一个值为child的对象
  *
  * @param {*} children `this.props.children`
  * @return {object} Mapping of key to child
@@ -27,6 +28,11 @@ export function getChildMapping(children, mapFn) {
  * ReactMultiChild to make this easy, but for now React itself does not
  * directly have this concept of the union of prevChildren and nextChildren
  * so we implement it here.
+ * 当你添加或者移除children, 有一些可能会在相同的render pass被添加或移除. 我们想要两个
+ * 都显示, 因为我们想要动画元素同时in和out. 这个函数传入之前的keys集合和一个新的keys集
+ * 合, 将它们用猜想的最佳顺序合并起来. 在未来我们可能会在ReactMultiChild暴露一些公用单
+ * 元来让它更容易, 但是现在React自身没有直接地合并prevChildren和nextChildren的方式,
+ * 所以我们在这里实现它.
  *
  * @param {object} prev prev children as returned from
  * `ReactTransitionChildMapping.getChildMapping()`.
@@ -45,6 +51,7 @@ export function mergeChildMappings(prev, next) {
 
   // For each key of `next`, the list of keys to insert before that key in
   // the combined list
+  // 对于每个`next`的key, 插入到combined list之前的列表?
   let nextKeysPending = Object.create(null)
 
   let pendingKeys = []
@@ -85,6 +92,7 @@ function getProp(child, prop, props) {
   return props[prop] != null ? props[prop] : child.props[prop]
 }
 
+// 得到初始的childMipping
 export function getInitialChildMapping(props, onExited) {
   return getChildMapping(props.children, child => {
     return cloneElement(child, {
@@ -97,8 +105,13 @@ export function getInitialChildMapping(props, onExited) {
   })
 }
 
+// 计算得到新的childMapping
 export function getNextChildMapping(nextProps, prevChildMapping, onExited) {
+
+  // 得到child的mapping
   let nextChildMapping = getChildMapping(nextProps.children)
+
+  // 得到合并后的mapping
   let children = mergeChildMappings(prevChildMapping, nextChildMapping)
 
   Object.keys(children).forEach(key => {
@@ -113,6 +126,7 @@ export function getNextChildMapping(nextProps, prevChildMapping, onExited) {
     const isLeaving = isValidElement(prevChild) && !prevChild.props.in
 
     // item is new (entering)
+    // item新加入时
     if (hasNext && (!hasPrev || isLeaving)) {
       // console.log('entering', key)
       children[key] = cloneElement(child, {

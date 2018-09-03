@@ -1,3 +1,4 @@
+// 用数组实现的简单set
 
 export default class SimpleSet {
   constructor() {
