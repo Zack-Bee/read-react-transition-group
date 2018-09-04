@@ -16,6 +16,7 @@ const propTypes = {
 /**
  * The `<ReplaceTransition>` component is a specialized `Transition` component
  * that animates between two children.
+ * `<ReplaceTransition>`组件是在两个孩子中产生动画特殊的`Transition`组件. 
  *
  * ```jsx
  * <ReplaceTransition in>
